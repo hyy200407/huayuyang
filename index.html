@@ -46,7 +46,7 @@
       <section class="intro section-shell" aria-labelledby="intro-title">
         <div class="intro-copy">
           <p class="eyebrow">PYTHON / DATA COLLECTION</p>
-          <h1 id="intro-title">你好，我是<span data-bind="name">林嘉</span></h1>
+          <h1 id="intro-title">你好，我是<span data-bind="name">华雨阳</span></h1>
           <p class="role" data-bind="title">Python 数据采集学习者</p>
           <p class="summary" data-bind="summary">用代码把开放数据变成可理解的信息。我专注网页采集、数据清洗与自动化流程。</p>
           <div class="actions">
@@ -59,7 +59,7 @@
         <aside class="profile-panel" aria-label="个人资料">
           <div class="portrait" aria-hidden="true"><span data-bind="initials">LJ</span></div>
           <div class="profile-meta"><span>当前状态</span><strong data-bind="status">持续学习中</strong></div>
-          <div class="profile-meta"><span>所在地</span><strong data-bind="location">中国 · 杭州</strong></div>
+          <div class="profile-meta"><span>所在地</span><strong data-bind="location">中国 · 南京</strong></div>
           <div class="profile-line"><span></span><span></span><span></span><span></span><span></span></div>
         </aside>
       </section>
