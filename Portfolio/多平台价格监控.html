@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多平台价格监控系统 | 华雨阳作品集</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            background: #0a0e27;
+            color: #e0e0e0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,255,255,0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+            z-index: 0;
+        }
+        @keyframes gridMove { to { transform: translate(50px, 50px); } }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 50%; left: 50%;
+            width: 800px; height: 800px;
+            background: radial-gradient(circle, rgba(0,255,255,0.06) 0%, transparent 70%);
+            transform: translate(-50%, -50%);
+            animation: glow 8s ease-in-out infinite;
+            z-index: 0;
+            pointer-events: none;
+        }
+        @keyframes glow {
+            0%,100% { opacity: 0.3; transform: translate(-50%,-50%) scale(1); }
+            50% { opacity: 0.6; transform: translate(-50%,-50%) scale(1.2); }
+        }
+
+        .dashboard {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 30px;
+            background: rgba(10,14,39,0.95);
+            border-bottom: 1px solid rgba(0,255,255,0.15);
+            flex-shrink: 0;
+        }
+
+        .top-bar h1 {
+            font-size: 22px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00ffff 0%, #0080ff 50%, #ff00ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 2px;
+        }
+
+        .top-bar .status-area {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .top-bar .time-display {
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            color: #5a7a9a;
+        }
+
+        .status-badge {
+            padding: 5px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .status-idle { background: rgba(128,128,128,0.2); color: #888; border: 1px solid #555; }
+        .status-running { background: rgba(0,255,128,0.2); color: #00ff80; border: 1px solid #00ff80; animation: pulse 2s ease-in-out infinite; }
+        .status-success { background: rgba(255,215,0,0.2); color: #ffd700; border: 1px solid #ffd700; box-shadow: 0 0 15px rgba(255,215,0,0.4); }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid rgba(0,255,255,0.1);
+            background: rgba(10,14,39,0.6);
+            overflow-y: auto;
+        }
+
+        .left-panel::-webkit-scrollbar { width: 4px; }
+        .left-panel::-webkit-scrollbar-track { background: transparent; }
+        .left-panel::-webkit-scrollbar-thumb { background: rgba(0,255,255,0.2); border-radius: 2px; }
+
+        .panel-block {
+            padding: 18px;
+            border-bottom: 1px solid rgba(0,255,255,0.08);
+        }
+
+        .block-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #00ffff;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .block-title::before {
+            content: '';
+            width: 3px; height: 14px;
+            background: #00ffff;
+            border-radius: 2px;
+            box-shadow: 0 0 8px rgba(0,255,255,0.5);
+        }
+
+        .platform-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .platform-tab {
+            flex: 1;
+            padding: 9px 0;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 700;
+            color: #5a7a9a;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(0,20,40,0.5);
+            border: 1px solid rgba(0,255,255,0.1);
+            border-radius: 8px;
+        }
+        .platform-tab:hover { color: #88ccff; border-color: rgba(0,255,255,0.3); }
+        .platform-tab.active {
+            color: #00ffff;
+            background: rgba(0,255,255,0.08);
+            border-color: rgba(0,255,255,0.4);
+            box-shadow: 0 0 15px rgba(0,255,255,0.15);
+        }
+        .platform-tab .tab-icon { display: block; font-size: 17px; margin-bottom: 2px; }
+
+        .input-row { display: flex; gap: 10px; }
+
+        .input-row input, .settings-input {
+            flex: 1;
+            padding: 10px 12px;
+            background: rgba(0,20,40,0.6);
+            border: 1px solid rgba(0,255,255,0.2);
+            border-radius: 8px;
+            color: #e0e0e0;
+            font-size: 13px;
+            font-family: 'Consolas', monospace;
+            transition: all 0.3s;
+        }
+        .input-row input:focus, .settings-input:focus {
+            outline: none;
+            border-color: #00ffff;
+            box-shadow: 0 0 15px rgba(0,255,255,0.2);
+        }
+        input::placeholder { color: #3a5a7a; }
+
+        .btn-fetch {
+            padding: 10px 16px;
+            background: linear-gradient(135deg, #00ffff 0%, #0080ff 100%);
+            color: #0a0e27;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        .btn-fetch:hover:not(:disabled) { box-shadow: 0 4px 20px rgba(0,255,255,0.5); }
+        .btn-fetch:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .loading-hint {
+            text-align: center;
+            padding: 14px;
+            color: #00ffff;
+            font-size: 13px;
+            display: none;
+        }
+        .loading-hint.active { display: block; }
+        .loading-hint .spinner {
+            display: inline-block;
+            width: 14px; height: 14px;
+            border: 2px solid rgba(0,255,255,0.3);
+            border-top-color: #00ffff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .product-preview {
+            display: none;
+            background: rgba(0,20,40,0.5);
+            border: 1px solid rgba(0,255,255,0.2);
+            border-radius: 10px;
+            padding: 14px;
+            margin-top: 14px;
+            animation: fadeIn 0.4s ease;
+        }
+        .product-preview.active { display: flex; gap: 12px; align-items: center; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .product-preview img {
+            width: 56px; height: 56px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid rgba(0,255,255,0.15);
+            flex-shrink: 0;
+        }
+        .product-preview .info { flex: 1; min-width: 0; }
+        .product-preview .info .name {
+            font-size: 12px; color: #c0d0e0;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            margin-bottom: 4px;
+        }
+        .product-preview .info .price-tag {
+            font-size: 18px; font-weight: 700; color: #ff6b6b;
+            font-family: 'Consolas', monospace;
+        }
+        .product-preview .info .price-tag::before { content: '¥'; font-size: 12px; }
+        .btn-add {
+            padding: 8px 14px;
+            background: linear-gradient(135deg, #00ff80 0%, #00cc66 100%);
+            color: #0a0e27; border: none; border-radius: 6px;
+            font-size: 12px; font-weight: 700; cursor: pointer;
+            transition: all 0.3s; flex-shrink: 0;
+        }
+        .btn-add:hover { box-shadow: 0 4px 15px rgba(0,255,128,0.4); }
+
+        .setting-item { margin-bottom: 12px; }
+        .setting-item:last-child { margin-bottom: 0; }
+        .setting-item label {
+            display: block; margin-bottom: 6px;
+            color: #6a9abb; font-weight: 600; font-size: 12px;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .settings-input { width: 100%; }
+        .tip {
+            background: rgba(0,128,255,0.08);
+            border-left: 2px solid #0080ff;
+            padding: 8px 10px; margin-top: 8px; border-radius: 4px;
+            font-size: 11px; color: #6a9abb;
+        }
+
+        .button-group { display: flex; gap: 10px; }
+        button.ctrl-btn {
+            flex: 1; padding: 12px; border: none; border-radius: 8px;
+            font-size: 14px; font-weight: 700; cursor: pointer;
+            transition: all 0.3s; text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn-start {
+            background: linear-gradient(135deg, #00ffff 0%, #0080ff 100%);
+            color: #0a0e27; box-shadow: 0 4px 15px rgba(0,255,255,0.3);
+        }
+        .btn-start:hover:not(:disabled) { box-shadow: 0 6px 25px rgba(0,255,255,0.5); }
+        .btn-stop {
+            background: linear-gradient(135deg, #ff0080 0%, #ff0040 100%);
+            color: white; box-shadow: 0 4px 15px rgba(255,0,128,0.3);
+        }
+        .btn-stop:hover:not(:disabled) { box-shadow: 0 6px 25px rgba(255,0,128,0.5); }
+        .ctrl-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .products-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .products-area::-webkit-scrollbar { width: 4px; }
+        .products-area::-webkit-scrollbar-track { background: transparent; }
+        .products-area::-webkit-scrollbar-thumb { background: rgba(0,255,255,0.2); border-radius: 2px; }
+
+        .area-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+        .area-title {
+            font-size: 16px; font-weight: 700; color: #00ffff;
+            text-shadow: 0 0 10px rgba(0,255,255,0.3);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .area-title::before {
+            content: '';
+            width: 3px; height: 16px;
+            background: #00ffff; border-radius: 2px;
+            box-shadow: 0 0 8px rgba(0,255,255,0.5);
+        }
+        .product-count { font-size: 12px; color: #5a7a9a; }
+
+        .product-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .product-card {
+            background: rgba(15,25,45,0.7);
+            border: 1px solid rgba(0,255,255,0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s;
+            position: relative;
+        }
+        .product-card:hover {
+            border-color: rgba(0,255,255,0.35);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0,255,255,0.15);
+        }
+
+        .product-card .card-img {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            overflow: hidden;
+            background: rgba(255,255,255,0.03);
+            position: relative;
+        }
+        .product-card .card-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+        .product-card:hover .card-img img { transform: scale(1.05); }
+
+        .product-card .card-badge {
+            position: absolute;
+            top: 8px; left: 8px;
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            z-index: 2;
+        }
+        .badge-jd { background: rgba(232,51,35,0.85); color: #fff; }
+        .badge-taobao { background: rgba(255,106,0,0.85); color: #fff; }
+        .badge-1688 { background: rgba(255,165,0,0.85); color: #fff; }
+
+        .product-card .card-remove {
+            position: absolute;
+            top: 8px; right: 8px;
+            width: 24px; height: 24px;
+            background: rgba(255,0,80,0.7);
+            border: none; border-radius: 50%;
+            color: #fff; font-size: 12px;
+            cursor: pointer; transition: all 0.3s;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; z-index: 2;
+        }
+        .product-card:hover .card-remove { opacity: 1; }
+        .product-card .card-remove:hover { background: rgba(255,0,80,1); transform: scale(1.1); }
+
+        .product-card .card-body {
+            padding: 12px;
+        }
+        .product-card .card-name {
+            font-size: 13px; color: #b0c8e0; line-height: 1.4;
+            display: -webkit-box; -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical; overflow: hidden;
+            min-height: 36px; margin-bottom: 8px;
+        }
+        .product-card .card-price {
+            font-size: 20px; font-weight: 700; color: #ff6b6b;
+            font-family: 'Consolas', monospace;
+        }
+        .product-card .card-price::before { content: '¥'; font-size: 13px; margin-right: 2px; }
+
+        .empty-hint {
+            text-align: center; padding: 60px 20px;
+            color: #2a4a6a; font-size: 14px;
+        }
+        .empty-hint .empty-icon { font-size: 48px; margin-bottom: 15px; display: block; }
+
+        .bottom-bar {
+            height: 170px;
+            flex-shrink: 0;
+            border-top: 1px solid rgba(0,255,255,0.1);
+            background: rgba(10,14,39,0.8);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .bottom-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 20px;
+            border-bottom: 1px solid rgba(0,255,255,0.08);
+        }
+        .bottom-title {
+            font-size: 13px; font-weight: 700; color: #00ffff;
+            text-transform: uppercase; letter-spacing: 1px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .bottom-title::before {
+            content: '';
+            width: 3px; height: 12px;
+            background: #00ffff; border-radius: 2px;
+        }
+
+        .result-banner {
+            display: none;
+            padding: 8px 20px;
+            background: linear-gradient(90deg, rgba(255,215,0,0.1), transparent);
+            border-bottom: 1px solid rgba(255,215,0,0.15);
+            color: #ffd700;
+            font-size: 13px;
+            font-weight: 600;
+            align-items: center;
+            gap: 10px;
+        }
+        .result-banner.active { display: flex; }
+        .result-banner a { color: #ffd700; text-decoration: underline; }
+
+        .log-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 20px;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            line-height: 1.8;
+        }
+        .log-container::-webkit-scrollbar { width: 4px; }
+        .log-container::-webkit-scrollbar-track { background: transparent; }
+        .log-container::-webkit-scrollbar-thumb { background: rgba(0,255,255,0.2); border-radius: 2px; }
+
+        .log-item { padding: 2px 0; color: #5a8aaa; border-bottom: 1px solid rgba(0,255,255,0.03); }
+        .log-item:last-child { border-bottom: none; }
+
+        .demo-banner {
+            background: rgba(255,215,0,0.12);
+            border-bottom: 1px solid rgba(255,215,0,0.2);
+            color: #ffd700;
+            padding: 8px 20px;
+            font-size: 13px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .demo-banner a { color: #00ffff; text-decoration: underline; margin-left: 10px; }
+
+        @media (max-width: 860px) {
+            .main-content { grid-template-columns: 1fr; }
+            .left-panel { border-right: none; border-bottom: 1px solid rgba(0,255,255,0.1); max-height: 50vh; }
+            .right-panel { height: 50vh; }
+            .top-bar h1 { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="demo-banner">
+            📌 当前为纯前端演示版，数据与监控状态仅在本地模拟，完整 Python 源码请 <a href="多平台价格监控/app.py" download>下载 app.py</a>
+        </div>
+        <div class="top-bar">
+            <h1>⚡ 多平台价格监控系统</h1>
+            <div class="status-area">
+                <span class="time-display" id="time_display"></span>
+                <span class="status-badge status-idle" id="status_badge">待命</span>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="left-panel">
+                <div class="panel-block">
+                    <div class="block-title">添加商品</div>
+                    <div class="platform-tabs">
+                        <button class="platform-tab active" data-platform="jd" onclick="switchPlatform('jd')">
+                            <span class="tab-icon">🔴</span>京东
+                        </button>
+                        <button class="platform-tab" data-platform="taobao" onclick="switchPlatform('taobao')">
+                            <span class="tab-icon">🟠</span>淘宝
+                        </button>
+                        <button class="platform-tab" data-platform="1688" onclick="switchPlatform('1688')">
+                            <span class="tab-icon">🟡</span>1688
+                        </button>
+                    </div>
+                    <div class="input-row">
+                        <input type="text" id="product_url" placeholder="粘贴商品链接...">
+                        <button class="btn-fetch" id="btn_fetch" onclick="fetchProduct()">获取</button>
+                    </div>
+                    <div class="loading-hint" id="loading_hint">
+                        <span class="spinner"></span>正在模拟获取商品信息...
+                    </div>
+                    <div class="product-preview" id="product_preview">
+                        <img id="preview_img" src="" alt="" referrerpolicy="no-referrer">
+                        <div class="info">
+                            <div class="name" id="preview_name"></div>
+                            <div class="price-tag" id="preview_price"></div>
+                        </div>
+                        <button class="btn-add" onclick="addProduct()">+ 添加</button>
+                    </div>
+                </div>
+
+                <div class="panel-block">
+                    <div class="block-title">监控设置</div>
+                    <div class="setting-item">
+                        <label>预期价格（元）</label>
+                        <input type="number" class="settings-input" id="ideal_price" placeholder="低于此价格时提醒" step="0.01">
+                    </div>
+                    <div class="setting-item">
+                        <label>监控间隔（秒）</label>
+                        <input type="number" class="settings-input" id="check_interval" placeholder="每隔多少秒检查一次" value="30" min="10" step="5">
+                    </div>
+                    <div class="setting-item">
+                        <label>Server酱 SendKey</label>
+                        <input type="text" class="settings-input" id="sendkey" placeholder="SCT...">
+                        <div class="tip">💡 完整版中用于微信降价提醒</div>
+                    </div>
+                </div>
+
+                <div class="panel-block">
+                    <div class="block-title">控制面板</div>
+                    <div class="button-group">
+                        <button class="ctrl-btn btn-start" id="btn_start" onclick="startMonitor()">▶ 开始</button>
+                        <button class="ctrl-btn btn-stop" id="btn_stop" onclick="stopMonitor()" disabled>⏸ 停止</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-panel">
+                <div class="products-area">
+                    <div class="area-header">
+                        <span class="area-title">监控列表</span>
+                        <span class="product-count" id="product_count">共 0 件商品</span>
+                    </div>
+                    <div class="product-list" id="product_list">
+                        <div class="empty-hint">
+                            <span class="empty-icon">📦</span>
+                            暂无商品，请在左侧添加
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bottom-bar">
+                    <div class="bottom-header">
+                        <span class="bottom-title">运行日志</span>
+                    </div>
+                    <div class="result-banner" id="result_banner"></div>
+                    <div class="log-container" id="log_container">
+                        <div class="log-item">系统就绪，等待操作...（演示模式）</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'price_monitor_demo_products';
+        const initialProducts = [{"image": "https://gw.alicdn.com/bao/uploaded/i1/1649252468/O1CN01BJ7feh1U6OcEh95dC_!!1649252468.jpg_.webp", "platform": "taobao", "platform_name": "淘宝", "price": 3228.0, "title": "Lenovo/联想 小新 Pr", "url": "https://item.taobao.com/item.htm?ali_refid=a3_mm_12852562_1778064_115833800237%3A1237100060%3AH%3A1ehxXntKGbHotJqpafWgsu8tvryvCwV5lxS7JHsie7Y%3D%3Aa0ceaa002898fb76e34bbedf3ae6ffb3&ali_trackid=282_a0ceaa002898fb76e34bbedf3ae6ffb3&id=869813019908&mi_id=0000yHqkqsAjMPE4oxp9iM681d3ere_6fMJ45aWixEYRTqI&mm_sceneid=1_0_46414665_0&priceTId=214783ec17847099886027960e0f29&skuId=5868702019088&spm=tbpc.sem.item.2&utparam=%7B%22aplus_abtest%22%3A%2258961e502394d0afec87e2d47f96e3be%22%7D&xxc=ad_ztc"}, {"image": "https://cbu01.alicdn.com/img/ibank/O1CN01vttUik1TWfdV2vdQv_!!2211411752390-0-cib.jpg_.webp", "platform": "1688", "platform_name": "1688", "price": 3223.0, "title": "联想小新1414SE1515S", "url": "https://detail.1688.com/offer/895535395512.html?spm=a312h.2018_new_sem.dh_002.37.4640389dEZk8C7&src=zhanwai&ptid=01770000000b89b1eb761ae6ca028e5c"}, {"image": "https://img10.360buyimg.com/pcpubliccms/s1440x1440_jfs/t1/420918/11/17102/99415/69ec6ec2F052c2af1/0083320320edbc46.jpg.avif", "platform": "jd", "platform_name": "京东", "price": 3558.6, "title": "联想笔记本电脑补贴1", "url": "https://item.jd.com/10214107138561.html?extension_id=eyJhZCI6IjI2OCIsImNoIjoiMiIsInNrdSI6IjEwMjE0MTA3MTM4NTYxIiwidHMiOiIxNzg0NzA5ODExIiwidW5pcWlkIjoie1wiY2xpY2tfaWRcIjpcIjYyZDIzNmM5LWVlNjYtNDQ4MS1iOTExLTliNjViNTRhODAyOFwiLFwibWF0ZXJpYWxfaWRcIjpcIjY5NDYwODEzMDQ3XCIsXCJwb3NfaWRcIjpcIjI2OFwiLFwic2lkXCI6XCJmZDYzMDQ0OC1hMzI1LTQ4MzEtYjY4My1iYTc1MTJhNDY0MzVcIn0ifQ==&jd_pop=62d236c9-ee66-4481-b911-9b65b54a8028&abt=0"}, {"image": "https://img10.360buyimg.com/pcpubliccms/s1440x1440_jfs/t1/482891/27/7265/100090/6a5ecd93F8adbb941/00833203207f1368.jpg.avif", "platform": "jd", "platform_name": "京东", "price": 4575.91, "title": "小米笔记本电脑 红米", "url": "https://item.jd.com/100105522236.html"}, {"image": "https://cbu01.alicdn.com/img/ibank/O1CN01eyDXGq1Yftfx26BJp_!!1957243087-0-cib.jpg_.webp", "platform": "1688", "platform_name": "1688", "price": 6732.0, "title": "12.2英寸二合一加固笔记本电", "url": "https://detail.1688.com/offer/864192643597.html?src=zhanwai&pid=301011_0000&ptid=01770000000b8a884f801084c867a208&exp=enquiry%3AB%3BqueryMobilePhone%3AA%3Bxlyx%3AB&_force_exp_buckets_=11803%2C2024061701%2C2024011602&spm=a312h.2018_new_sem.dh_002.17.7499389dBuu6xf&cosite=baidujj_pz&tracelog=p4p&_p_isad=1&clickid=92585f6926ec455a837a08fd029b5a8a&sessionid=da5da1fa7b2a51be66e3e7a66a110cf6&a=1250&e=NxUTIlULViHegpK9A9aASRfkI6A6NvTXVkcZ6YbP5sicHUtUmzNRpyDUh0bDjNOjk-79i5CeFzyyPr6fDwaSy7SIvFZGx0nzOuYqREPTXc8qcmD2Inyn7gtp33YLkbbNZf9ngshgc00yZZ4gpCPbyX5JbLx7PXYBipRPEVcrLfPVWQZsD5y0gqyCdsakPtk7cfCznJ2H91kcSDt5YrMbbL6hPDRcPFlqUwBf6k4h7PzvcMQtFyN88w__&sk=sem&style=1"}];
+
+        let currentPlatform = 'jd';
+        let currentProduct = null;
+        let products = loadProducts();
+        let monitorRunning = false;
+        let monitorTimer = null;
+        let checkIntervalTimer = null;
+        let logs = ['系统就绪，等待操作...（演示模式）'];
+        let monitorResult = null;
+
+        const PLATFORM_NAMES = { jd: '京东', taobao: '淘宝', '1688': '1688' };
+        const BADGE_CLASS = { jd: 'badge-jd', taobao: 'badge-taobao', '1688': 'badge-1688' };
+
+        function saveProducts() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+        }
+
+        function loadProducts() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) return JSON.parse(raw);
+            } catch (e) {}
+            return JSON.parse(JSON.stringify(initialProducts));
+        }
+
+        function log(msg) {
+            const now = new Date().toLocaleTimeString('zh-CN');
+            logs.push(`[${now}] ${msg}`);
+            if (logs.length > 100) logs.shift();
+            renderLogs();
+        }
+
+        function renderLogs() {
+            const box = document.getElementById('log_container');
+            box.innerHTML = logs.map(l => `<div class="log-item">${l}</div>`).join('');
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function updateTime() {
+            const now = new Date();
+            const str = now.toLocaleString('zh-CN', {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+            });
+            document.getElementById('time_display').textContent = str;
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        function switchPlatform(platform) {
+            currentPlatform = platform;
+            document.querySelectorAll('.platform-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.platform-tab[data-platform="${platform}"]`).classList.add('active');
+            document.getElementById('product_url').placeholder = `粘贴${PLATFORM_NAMES[platform]}商品链接...`;
+            document.getElementById('product_preview').classList.remove('active');
+            currentProduct = null;
+        }
+
+        function generateMockProduct(platform, url) {
+            const titles = {
+                jd: ['京东精选笔记本电脑', '京东智能数码好物', '京东家电补贴款'],
+                taobao: ['淘宝热卖笔记本', '淘宝优选数码', '淘宝性价比之选'],
+                '1688': ['1688 批发笔记本', '1688 源头工厂', '1688 企业采购款']
+            };
+            const images = {
+                jd: ['https://img10.360buyimg.com/pcpubliccms/s1440x1440_jfs/t1/482891/27/7265/100090/6a5ecd93F8adbb941/00833203207f1368.jpg.avif'],
+                taobao: ['https://gw.alicdn.com/bao/uploaded/i1/1649252468/O1CN01BJ7feh1U6OcEh95dC_!!1649252468.jpg_.webp'],
+                '1688': ['https://cbu01.alicdn.com/img/ibank/O1CN01vttUik1TWfdV2vdQv_!!2211411752390-0-cib.jpg_.webp']
+            };
+            const base = 3000 + Math.random() * 2000;
+            return {
+                platform: platform,
+                platform_name: PLATFORM_NAMES[platform],
+                title: titles[platform][Math.floor(Math.random() * titles[platform].length)],
+                price: parseFloat(base.toFixed(2)),
+                image: images[platform][0],
+                url: url
+            };
+        }
+
+        async function fetchProduct() {
+            const url = document.getElementById('product_url').value.trim();
+            if (!url) { alert('请输入商品链接'); return; }
+
+            const btnFetch = document.getElementById('btn_fetch');
+            const loading = document.getElementById('loading_hint');
+            const preview = document.getElementById('product_preview');
+
+            btnFetch.disabled = true;
+            loading.classList.add('active');
+            preview.classList.remove('active');
+
+            await new Promise(r => setTimeout(r, 1200));
+
+            currentProduct = generateMockProduct(currentPlatform, url);
+            document.getElementById('preview_img').src = currentProduct.image;
+            document.getElementById('preview_name').textContent = currentProduct.title;
+            document.getElementById('preview_price').textContent = currentProduct.price.toFixed(2);
+            preview.classList.add('active');
+
+            btnFetch.disabled = false;
+            loading.classList.remove('active');
+            log(`已获取 [${currentProduct.platform_name}] ${currentProduct.title} · ¥${currentProduct.price.toFixed(2)}`);
+        }
+
+        function addProduct() {
+            if (!currentProduct) return;
+            if (products.some(p => p.url === currentProduct.url)) {
+                alert('该商品已存在监控列表');
+                return;
+            }
+            products.push(currentProduct);
+            saveProducts();
+            renderProductList();
+            document.getElementById('product_preview').classList.remove('active');
+            document.getElementById('product_url').value = '';
+            log(`已添加监控商品：${currentProduct.title}`);
+            currentProduct = null;
+        }
+
+        function removeProduct(index) {
+            const removed = products[index];
+            products.splice(index, 1);
+            saveProducts();
+            renderProductList();
+            log(`已移除监控商品：${removed.title}`);
+        }
+
+        function renderProductList() {
+            const list = document.getElementById('product_list');
+            const count = document.getElementById('product_count');
+            count.textContent = `共 ${products.length} 件商品`;
+
+            if (products.length === 0) {
+                list.innerHTML = '<div class="empty-hint"><span class="empty-icon">📦</span>暂无商品，请在左侧添加</div>';
+                return;
+            }
+
+            list.innerHTML = products.map((p, i) => `
+                <div class="product-card" onclick="window.open('${p.url.replace(/'/g, "\'") || '#'}', '_blank')" title="点击跳转到商品页面" style="cursor:pointer">
+                    <div class="card-img">
+                        <span class="card-badge ${BADGE_CLASS[p.platform]}">${p.platform_name}</span>
+                        <button class="card-remove" onclick="event.stopPropagation(); removeProduct(${i})" title="移除">✕</button>
+                        <img src="${p.image || ''}" alt="${p.title}" referrerpolicy="no-referrer" onerror="this.style.display='none'">
+                    </div>
+                    <div class="card-body">
+                        <div class="card-name">${p.title}</div>
+                        <div class="card-price">${p.price.toFixed(2)}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function startMonitor() {
+            if (products.length === 0) { alert('请先添加至少一个商品'); return; }
+            const idealPrice = parseFloat(document.getElementById('ideal_price').value);
+            if (!idealPrice || idealPrice <= 0) { alert('请输入有效的预期价格'); return; }
+            const interval = parseInt(document.getElementById('check_interval').value) || 30;
+
+            monitorRunning = true;
+            monitorResult = null;
+            document.getElementById('btn_start').disabled = true;
+            document.getElementById('btn_stop').disabled = false;
+            document.getElementById('result_banner').classList.remove('active');
+            updateStatusBadge();
+            log(`开始监控，预期价格 ¥${idealPrice.toFixed(2)}，每 ${interval} 秒检查一次`);
+
+            // 模拟检查循环
+            let checkCount = 0;
+            monitorTimer = setInterval(() => {
+                if (!monitorRunning) return;
+                checkCount++;
+                const target = products[Math.floor(Math.random() * products.length)];
+                const newPrice = parseFloat((target.price * (0.95 + Math.random() * 0.1)).toFixed(2));
+                log(`[${target.platform_name}] ${target.title} 当前价格: ¥${newPrice.toFixed(2)}`);
+
+                if (newPrice < idealPrice) {
+                    monitorResult = {
+                        platform: target.platform_name,
+                        title: target.title,
+                        price: newPrice,
+                        url: target.url
+                    };
+                    stopMonitor();
+                    log(`✓ 发现符合条件的商品！${monitorResult.platform} - ${monitorResult.title} - ¥${monitorResult.price.toFixed(2)}`);
+                    const banner = document.getElementById('result_banner');
+                    banner.innerHTML = `🎉 ${monitorResult.platform} - ${monitorResult.title} <strong>¥${monitorResult.price.toFixed(2)}</strong> <a href="${monitorResult.url}" target="_blank">点击购买</a>`;
+                    banner.classList.add('active');
+                    updateStatusBadge();
+                }
+            }, Math.min(interval, 5) * 1000);
+        }
+
+        function stopMonitor() {
+            monitorRunning = false;
+            if (monitorTimer) { clearInterval(monitorTimer); monitorTimer = null; }
+            document.getElementById('btn_start').disabled = false;
+            document.getElementById('btn_stop').disabled = true;
+            log('监控已停止');
+            updateStatusBadge();
+        }
+
+        function updateStatusBadge() {
+            const badge = document.getElementById('status_badge');
+            if (monitorRunning) {
+                badge.className = 'status-badge status-running';
+                badge.textContent = '监控中';
+            } else if (monitorResult) {
+                badge.className = 'status-badge status-success';
+                badge.textContent = '已命中';
+            } else {
+                badge.className = 'status-badge status-idle';
+                badge.textContent = '待命';
+            }
+        }
+
+        renderProductList();
+        renderLogs();
+    </script>
+</body>
+</html>

@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>抖音点赞工具 | 华雨阳作品集</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --text: #17233d;
+      --muted: #7d8aa2;
+      --primary: #2d8cf0;
+      --primary-soft: rgba(45, 140, 240, 0.10);
+      --green: #57cd84;
+      --green-soft: rgba(87, 205, 132, 0.10);
+      --shadow: 0 18px 48px rgba(31, 43, 68, 0.08);
+    }
+
+    body {
+      font-family: "Microsoft YaHei", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    .back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 14px;
+      margin-bottom: 28px;
+      transition: color 0.2s;
+    }
+
+    .back:hover { color: #1a6fc4; }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+      gap: 44px;
+      align-items: center;
+      margin-bottom: 56px;
+    }
+
+    .hero-info .category {
+      display: inline-block;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--green);
+      background: var(--green-soft);
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-size: clamp(32px, 5vw, 46px);
+      line-height: 1.15;
+      margin-bottom: 18px;
+    }
+
+    .lead {
+      color: var(--muted);
+      font-size: 16px;
+      max-width: 520px;
+      margin-bottom: 24px;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .tag {
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      background: var(--primary-soft);
+      color: var(--primary);
+    }
+
+    .hero-img {
+      position: relative;
+    }
+
+    .hero-img img {
+      width: 100%;
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      display: block;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+      margin-bottom: 56px;
+    }
+
+    .feature-card {
+      background: var(--card);
+      border-radius: 20px;
+      padding: 26px;
+      box-shadow: var(--shadow);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 22px 56px rgba(31, 43, 68, 0.12);
+    }
+
+    .feature-card {
+      cursor: pointer;
+      position: relative;
+    }
+
+    .feature-card::after {
+      content: "点击查看详情";
+      position: absolute;
+      bottom: 14px;
+      right: 18px;
+      font-size: 12px;
+      color: var(--primary);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .feature-card:hover::after {
+      opacity: 1;
+    }
+
+    .feature-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      padding: 24px;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .feature-modal.active {
+      display: flex;
+      opacity: 1;
+    }
+
+    .feature-modal-box {
+      background: var(--card);
+      border-radius: 22px;
+      max-width: 520px;
+      width: 100%;
+      padding: 28px;
+      box-shadow: 0 28px 80px rgba(31, 43, 68, 0.2);
+      transform: translateY(12px);
+      transition: transform 0.25s ease;
+    }
+
+    .feature-modal.active .feature-modal-box {
+      transform: translateY(0);
+    }
+
+    .feature-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .feature-modal-title {
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .feature-modal-close {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: none;
+      background: #f1f5f9;
+      color: var(--muted);
+      font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .feature-modal-close:hover {
+      background: #e2e8f0;
+      color: var(--text);
+    }
+
+    .feature-modal-body {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .feature-modal-body strong {
+      color: var(--text);
+    }
+
+    .feature-modal-body code {
+      display: inline-block;
+      background: #f1f5f9;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-family: Consolas, Monaco, "Courier New", monospace;
+      font-size: 12px;
+      color: var(--primary);
+    }
+
+    .feature-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+      background: var(--primary-soft);
+      margin-bottom: 16px;
+    }
+
+    .feature-card h3 {
+      font-size: 17px;
+      margin-bottom: 10px;
+    }
+
+    .feature-card p {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .section {
+      background: var(--card);
+      border-radius: 24px;
+      padding: 32px;
+      box-shadow: var(--shadow);
+      margin-bottom: 28px;
+    }
+
+    .section h2 {
+      font-size: 22px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section h2::before {
+      content: "";
+      width: 5px;
+      height: 22px;
+      border-radius: 999px;
+      background: var(--primary);
+    }
+
+    .code-block {
+      background: #0f172a;
+      border-radius: 16px;
+      padding: 22px;
+      overflow-x: auto;
+      box-shadow: var(--shadow);
+    }
+
+    .code-block pre {
+      margin: 0;
+      font-family: Consolas, Monaco, "Courier New", monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      color: #e2e8f0;
+    }
+
+    .code-block code {
+      white-space: pre;
+    }
+
+    .tech-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+    }
+
+    .tech-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 14px;
+      background: #f8f9fc;
+    }
+
+    .tech-item strong {
+      font-size: 15px;
+      color: var(--text);
+    }
+
+    .tech-item span {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .steps {
+      counter-reset: step;
+      display: grid;
+      gap: 16px;
+    }
+
+    .step {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      padding: 18px;
+      border-radius: 16px;
+      background: #f8f9fc;
+    }
+
+    .step::before {
+      counter-increment: step;
+      content: counter(step);
+      flex-shrink: 0;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: var(--primary);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .step p {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .notice {
+      margin-top: 20px;
+      padding: 18px 20px;
+      border-radius: 14px;
+      background: #fff7e6;
+      color: #8a6d2f;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 60px;
+    }
+
+    @media (max-width: 860px) {
+      .hero { grid-template-columns: 1fr; }
+      .features { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a class="back" href="../index.html">← 返回作品集</a>
+
+    <section class="hero">
+      <div class="hero-info">
+        <span class="category">AUTOMATION</span>
+        <h1>抖音点赞工具</h1>
+        <p class="lead">
+          使用 Python + DrissionPage 实现的抖音自动化互动工具，可批量完成点赞、收藏等操作，把重复性工作交给代码。
+        </p>
+        <div class="tags">
+          <span class="tag">Python</span>
+          <span class="tag">DrissionPage</span>
+          <span class="tag">xpath</span>
+          <span class="tag">自动化</span>
+        </div>
+      </div>
+      <div class="hero-img">
+        <img src="抖音点赞工具.png" alt="抖音点赞工具封面">
+      </div>
+    </section>
+
+    <section class="features">
+      <div class="feature-card" data-feature="like" tabindex="0" role="button" aria-label="查看自动点赞详情">
+        <div class="feature-icon">👍</div>
+        <h3>自动点赞</h3>
+        <p>按照目标列表或视频链接自动执行点赞，无需手动逐个点击。</p>
+      </div>
+      <div class="feature-card" data-feature="favorite" tabindex="0" role="button" aria-label="查看自动收藏详情">
+        <div class="feature-icon">⭐</div>
+        <h3>自动收藏</h3>
+        <p>支持对指定视频进行批量收藏，方便后续整理与回看。</p>
+      </div>
+      <div class="feature-card" data-feature="batch" tabindex="0" role="button" aria-label="查看批量执行详情">
+        <div class="feature-icon">🚀</div>
+        <h3>批量执行</h3>
+        <p>一次配置即可连续处理多个任务，提升日常操作效率。</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>技术栈</h2>
+      <div class="tech-list">
+        <div class="tech-item">
+          <div>
+            <strong>Python</strong>
+            <span>核心脚本语言，负责流程编排与任务调度。</span>
+          </div>
+        </div>
+        <div class="tech-item">
+          <div>
+            <strong>DrissionPage</strong>
+            <span>兼顾浏览器自动化与 requests 风格请求，简化登录与交互。</span>
+          </div>
+        </div>
+        <div class="tech-item">
+          <div>
+            <strong>xpath</strong>
+            <span>用于精准定位页面元素，如点赞按钮、收藏按钮等。</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>运行流程</h2>
+      <div class="steps">
+        <div class="step">
+          <p>启动脚本并载入目标账号或视频列表配置。</p>
+        </div>
+        <div class="step">
+          <p>DrissionPage 自动打开抖音页面并完成登录态维持。</p>
+        </div>
+        <div class="step">
+          <p>使用 xpath 定位点赞 / 收藏按钮，模拟真实用户操作。</p>
+        </div>
+        <div class="step">
+          <p>按批次执行并输出操作日志，完成批量任务后自动退出。</p>
+        </div>
+      </div>
+      <div class="notice">
+        说明：本工具仅用于学习自动化原理，实际使用需遵守平台规则与相关法律法规，禁止用于刷量、骚扰等违规行为。
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>核心源码（任务循环）</h2>
+      <p style="color:var(--muted);font-size:14px;margin-bottom:16px;">
+        工具通过 pyautogui 模拟键鼠、pynput 监听热键，核心是一个循环任务：点击视频区 → Z 键点赞 → 点击收藏 → 等待间隔 → ↓ 切下一个。
+      </p>
+      <div class="code-block"><pre><code>def task_loop(mode, like_x, like_y, fav_x, fav_y, interval):
+    global RUN_TASK
+    count = 0
+    while RUN_TASK:
+        # ① 点赞：先点击视频区确保焦点，再按 Z
+        if mode in ("like", "both"):
+            if like_x &gt; 0 and like_y &gt; 0:
+                pyautogui.click(like_x, like_y)
+                time.sleep(0.2)
+            pyautogui.press("z")          # 抖音网页版点赞快捷键
+            time.sleep(0.15)
+
+        # ② 收藏：鼠标点击收藏坐标
+        if mode in ("favorite", "both"):
+            if fav_x &gt; 0 and fav_y &gt; 0:
+                pyautogui.click(fav_x, fav_y)
+            time.sleep(0.15)
+
+        count += 1
+        print(f"✓ 第 {count} 个作品 · 完成")
+
+        # ③ 等待切换间隔
+        elapsed = 0
+        while RUN_TASK and elapsed &lt; interval:
+            time.sleep(0.1)
+            elapsed += 0.1
+
+        # ④ 切换到下一个作品
+        if RUN_TASK:
+            pyautogui.press("down")
+            time.sleep(0.3)
+
+    print("✅ 任务循环已终止")</code></pre></div>
+      <p style="color:var(--muted);font-size:13px;margin-top:14px;">
+        完整脚本（含 Tkinter GUI、坐标捕获、Ctrl+Shift+X 停止热键）已随项目提供，可下载查看：
+        <a href="抖音点赞工具.py" download style="color:var(--primary);">抖音点赞工具.py</a>
+      </p>
+    </section>
+
+    <footer>
+      © 2026 华雨阳作品集 · 仅供学习演示使用
+    </footer>
+  </div>
+
+  <!-- 功能卡片详情弹窗 -->
+  <div class="feature-modal" id="featureModal" aria-hidden="true">
+    <div class="feature-modal-box">
+      <div class="feature-modal-header">
+        <h3 class="feature-modal-title" id="modalTitle"><span>👍</span><span>自动点赞</span></h3>
+        <button class="feature-modal-close" id="modalClose" aria-label="关闭">×</button>
+      </div>
+      <div class="feature-modal-body" id="modalBody">
+        详情说明
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const featureDetails = {
+      like: {
+        icon: '👍',
+        title: '自动点赞',
+        body: `<p><strong>实现思路：</strong>脚本先点击视频区域确保当前窗口获得焦点，随后模拟按下抖音网页版的点赞快捷键 <code>Z</code>，完成一次自动点赞。</p>
+        <p style="margin-top:12px;"><strong>对应代码片段：</strong></p>
+        <p><code>pyautogui.click(like_x, like_y)</code><br><code>time.sleep(0.2)</code><br><code>pyautogui.press("z")</code></p>`
+      },
+      favorite: {
+        icon: '⭐',
+        title: '自动收藏',
+        body: `<p><strong>实现思路：</strong>通过 GUI 提前捕获收藏按钮的屏幕坐标，任务循环中直接调用 <code>pyautogui.click(fav_x, fav_y)</code> 完成收藏。</p>
+        <p style="margin-top:12px;"><strong>对应代码片段：</strong></p>
+        <p><code>pyautogui.click(fav_x, fav_y)</code><br><code>time.sleep(0.15)</code></p>`
+      },
+      batch: {
+        icon: '🚀',
+        title: '批量执行',
+        body: `<p><strong>实现思路：</strong>在 Tkinter GUI 中配置好任务参数（点赞/收藏模式、坐标、间隔时间）后，启动后台线程进入循环。每次循环处理一个作品，按 <code>↓</code> 切换到下一个，直到用户按下 <code>Ctrl+Shift+X</code> 停止或手动关闭。</p>
+        <p style="margin-top:12px;"><strong>对应代码片段：</strong></p>
+        <p><code>while RUN_TASK:</code><br>  <code>pyautogui.press("down")</code><br>  <code>time.sleep(interval)</code></p>`
+      }
+    };
+
+    const modal = document.getElementById('featureModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    const modalClose = document.getElementById('modalClose');
+
+    function openFeature(key) {
+      const data = featureDetails[key];
+      if (!data) return;
+      modalTitle.innerHTML = `<span>${data.icon}</span><span>${data.title}</span>`;
+      modalBody.innerHTML = data.body;
+      modal.classList.add('active');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeFeature() {
+      modal.classList.remove('active');
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
+    document.querySelectorAll('.feature-card').forEach(card => {
+      card.addEventListener('click', () => openFeature(card.dataset.feature));
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openFeature(card.dataset.feature);
+        }
+      });
+    });
+
+    modalClose.addEventListener('click', closeFeature);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeFeature();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeFeature();
+    });
+  </script>
+</body>
+</html>

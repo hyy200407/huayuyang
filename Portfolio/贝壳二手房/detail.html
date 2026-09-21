@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>房源详情 - 贝壳找房模拟</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- 顶部导航 -->
+  <nav class="top-nav">
+    <div class="top-nav-inner">
+      <div class="logo-area">
+        <div class="logo-icon">贝</div>
+        <span class="logo-text">贝壳找房</span>
+      </div>
+      <div class="nav-links">
+        <a href="index.html" class="active">二手房</a>
+        <a href="#">新房</a>
+        <a href="#">租房</a>
+        <a href="#">小区</a>
+        <a href="#">找房</a>
+      </div>
+      <div class="search-area">
+        <input type="text" placeholder="请输入小区名、商圈或地铁站开始找房">
+      </div>
+      <div class="nav-right">
+        <a href="#" id="loginLink">登录</a>
+        <a href="#" id="registerLink">注册</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 面包屑 -->
+  <div class="breadcrumb">
+    <a href="index.html">北京二手房</a><span>&gt;</span>房源详情
+  </div>
+
+  <div class="detail-wrapper">
+    <a class="back-link" onclick="history.back()">← 返回列表</a>
+    <div class="detail-main">
+      <div class="detail-left">
+        <div class="detail-image-box">
+          <div class="detail-image">
+            <img id="detailImage" src="" alt="" style="width:100%;height:100%;object-fit:cover;">
+          </div>
+        </div>
+        <div class="detail-title-box">
+          <h1 class="detail-title" id="detailTitle"></h1>
+          <div class="detail-price-box">
+            <div class="detail-total" id="detailTotalPrice"></div>
+            <div class="detail-unit" id="detailUnitPrice"></div>
+          </div>
+        </div>
+        <div class="detail-info-box">
+          <h3>房屋信息</h3>
+          <table class="detail-info-table" id="detailInfoTable"></table>
+        </div>
+        <div class="detail-desc-box">
+          <h3>房源介绍</h3>
+          <p id="detailDesc"></p>
+        </div>
+      </div>
+      <div class="detail-right">
+        <div class="detail-sidebar-card">
+          <h3>经纪人信息</h3>
+          <div class="agent-card">
+            <div class="agent-avatar">👤</div>
+            <div>
+              <div class="agent-name">王经理</div>
+              <div class="agent-role">资深房产顾问</div>
+            </div>
+          </div>
+          <button class="btn-contact">在线咨询</button>
+          <button class="btn-phone">电话联系</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 底部 -->
+  <footer class="footer">
+    <div>© 2026 贝壳找房模拟网站 · 仅供学习演示使用，数据来源于公开信息</div>
+  </footer>
+
+  <!-- 登录/注册弹窗 -->
+  <div class="modal-overlay" id="authModal" hidden>
+    <div class="modal-box">
+      <button class="modal-close" id="modalClose" aria-label="关闭">×</button>
+      <div class="modal-tabs">
+        <div class="modal-tab active" data-tab="login">登录</div>
+        <div class="modal-tab" data-tab="register">注册</div>
+      </div>
+      <form class="modal-form" id="loginForm">
+        <input type="text" placeholder="手机号 / 用户名" required>
+        <input type="password" placeholder="密码" required>
+        <button type="submit" class="modal-submit">登录</button>
+      </form>
+      <form class="modal-form" id="registerForm" hidden>
+        <input type="text" placeholder="手机号" required>
+        <input type="password" placeholder="设置密码" required>
+        <input type="password" placeholder="确认密码" required>
+        <button type="submit" class="modal-submit">注册</button>
+      </form>
+      <div class="modal-msg" id="modalMsg"></div>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

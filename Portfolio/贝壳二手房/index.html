@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>北京二手房_北京二手房出售买卖信息网【北京贝壳找房】</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- 顶部导航 -->
+  <nav class="top-nav">
+    <div class="top-nav-inner">
+      <div class="logo-area">
+        <div class="logo-icon">贝</div>
+        <span class="logo-text">贝壳找房</span>
+      </div>
+      <div class="nav-links">
+        <a href="#" class="active" data-nav="ershou">二手房</a>
+        <a href="#" data-nav="xinfang">新房</a>
+        <a href="#" data-nav="zufang">租房</a>
+        <a href="#" data-nav="xiaoqu">小区</a>
+        <a href="#" data-nav="zhaofang">找房</a>
+      </div>
+      <div class="search-area">
+        <input type="text" id="searchInput" placeholder="请输入小区名、商圈或地铁站开始找房">
+        <button class="search-btn" onclick="applyFilters()"></button>
+      </div>
+      <div class="nav-right">
+        <a href="#" id="loginLink">登录</a>
+        <a href="#" id="registerLink">注册</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 面包屑 -->
+  <div class="breadcrumb">
+    <a href="#">北京</a><span>&gt;</span><a href="#">二手房</a><span>&gt;</span>全部
+  </div>
+
+  <div class="main-container">
+
+    <!-- 筛选栏 -->
+    <div class="filter-section">
+      <div class="filter-row">
+        <div class="filter-label">位置</div>
+        <div class="filter-options" id="areaFilter">
+          <div class="filter-option active" data-value="">不限</div>
+          <div class="filter-option" data-value="银地家园">银地家园</div>
+          <div class="filter-option" data-value="金地名京">金地名京</div>
+          <div class="filter-option" data-value="鸿坤理想城礼域府">鸿坤理想城</div>
+          <div class="filter-option" data-value="古城西路">古城西路</div>
+          <div class="filter-option" data-value="农丰里">农丰里</div>
+          <div class="filter-option" data-value="月坛北街">月坛北街</div>
+          <div class="filter-option" data-value="禾风相府">禾风相府</div>
+          <div class="filter-option" data-value="富华家园">富华家园</div>
+          <div class="filter-option" data-value="天畅园">天畅园</div>
+          <div class="filter-option" data-value="阳光上东">阳光上东</div>
+        </div>
+      </div>
+      <div class="filter-row">
+        <div class="filter-label">价格</div>
+        <div class="filter-options" id="priceFilter">
+          <div class="filter-option active" data-value="">不限</div>
+          <div class="filter-option" data-value="0-300">300万以下</div>
+          <div class="filter-option" data-value="300-500">300-500万</div>
+          <div class="filter-option" data-value="500-800">500-800万</div>
+          <div class="filter-option" data-value="800-1000">800-1000万</div>
+          <div class="filter-option" data-value="1000-99999">1000万以上</div>
+        </div>
+      </div>
+      <div class="filter-row">
+        <div class="filter-label">户型</div>
+        <div class="filter-options" id="layoutFilter">
+          <div class="filter-option active" data-value="">不限</div>
+          <div class="filter-option" data-value="1室1厅">一室</div>
+          <div class="filter-option" data-value="2室1厅">两室</div>
+          <div class="filter-option" data-value="2室2厅">两室两厅</div>
+          <div class="filter-option" data-value="3室1厅">三室</div>
+          <div class="filter-option" data-value="3室2厅">三室两厅</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 排序栏 -->
+    <div class="sort-bar">
+      <div class="sort-tabs">
+        <div class="sort-tab active" data-sort="default">默认排序</div>
+        <div class="sort-tab" data-sort="price-asc">总价从低到高</div>
+        <div class="sort-tab" data-sort="price-desc">总价从高到低</div>
+        <div class="sort-tab" data-sort="area-desc">面积从大到小</div>
+      </div>
+      <div class="result-count">共找到 <strong id="resultCount">30</strong> 套北京二手房</div>
+    </div>
+
+    <!-- 房源列表 -->
+    <div class="house-list" id="houseList"></div>
+
+    <!-- 分页 -->
+    <div class="pagination" id="pagination"></div>
+
+  </div>
+
+  <!-- 底部 -->
+  <footer class="footer">
+    <div>© 2026 贝壳找房模拟网站 · 仅供学习演示使用，数据来源于公开信息</div>
+  </footer>
+
+  <!-- 登录/注册弹窗 -->
+  <div class="modal-overlay" id="authModal" hidden>
+    <div class="modal-box">
+      <button class="modal-close" id="modalClose" aria-label="关闭">×</button>
+      <div class="modal-tabs">
+        <div class="modal-tab active" data-tab="login">登录</div>
+        <div class="modal-tab" data-tab="register">注册</div>
+      </div>
+      <form class="modal-form" id="loginForm">
+        <input type="text" placeholder="手机号 / 用户名" required>
+        <input type="password" placeholder="密码" required>
+        <button type="submit" class="modal-submit">登录</button>
+      </form>
+      <form class="modal-form" id="registerForm" hidden>
+        <input type="text" placeholder="手机号" required>
+        <input type="password" placeholder="设置密码" required>
+        <input type="password" placeholder="确认密码" required>
+        <button type="submit" class="modal-submit">注册</button>
+      </form>
+      <div class="modal-msg" id="modalMsg"></div>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
